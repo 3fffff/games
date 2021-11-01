@@ -1,2 +1,2 @@
 # games
-javascrpt games
+javascript games

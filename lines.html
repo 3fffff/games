@@ -254,16 +254,16 @@
             reDraw()
             return
         }
-        let i = start.gridX - 1, j = start.gridY - 1, min = A[start.gridX - 1][start.gridY - 1], k = 0, l = 0;
+        let i = start.gridX - 1, j = start.gridY - 1, min = A[start.gridX - 1][start.gridY - 1]
         for (let t = 0; t < A[start.gridX - 1][start.gridY - 1]; t++) {
             //(function (t) {
             setTimeout(function () {
-                if (i - 1 >= 0 && min > A[i - 1][j] && A[i - 1][j] !== -1) { start.gridX -= 1; min = A[i - 1][j]; k = i - 1; l = j; reDraw(); }
-                if (i + 1 < 10 && min > A[i + 1][j] && A[i + 1][j] !== -1) { start.gridX += 1; min = A[i + 1][j]; k = i + 1; l = j; reDraw(); }
-                if (j - 1 >= 0 && min > A[i][j - 1] && A[i][j - 1] !== -1) { start.gridY -= 1; min = A[i][j - 1]; k = i; l = j - 1; reDraw(); }
-                if (j + 1 < 10 && min > A[i][j + 1] && A[i][j + 1] !== -1) { start.gridY += 1; min = A[i][j + 1]; k = i; l = j + 1; reDraw(); }
+                if (i - 1 >= 0 && min > A[i - 1][j] && A[i - 1][j] !== -1) { start.gridX -= 1; min = A[i - 1][j]; i = i - 1;  reDraw(); }
+                else if (i + 1 < 10 && min > A[i + 1][j] && A[i + 1][j] !== -1) { start.gridX += 1; min = A[i + 1][j]; i = i + 1; reDraw(); }
+                else if (j - 1 >= 0 && min > A[i][j - 1] && A[i][j - 1] !== -1) { start.gridY -= 1; min = A[i][j - 1]; j = j - 1; reDraw(); }
+                else if (j + 1 < 10 && min > A[i][j + 1] && A[i][j + 1] !== -1) { start.gridY += 1; min = A[i][j + 1]; j = j + 1; reDraw(); }
                 if (min == 0) { createTiles(tiles_array.length + genBalls); RemoveBalls(start); reDraw(); preGenBalls(); }
-                i = k; j = l;
+                //i = k; j = l;
             }, 50 * t);
             //})(t);
         }

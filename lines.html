@@ -1,272 +1,285 @@
 <html>
 
 <head>
-  <meta charset="windows-1251">
+    <meta charset="windows-1251">
 </head>
 
 <body>
-  <canvas id="canvas" class="canvas" width="500" height="500" style="background-color: white;"></canvas>
-  <canvas id="pre_def_balls" width="500" height="50" style="background-color: white;display:block"></canvas>
-  <div id="score">score:0</div>
+    <canvas id="canvas" class="canvas" width="500" height="500" style="background-color: white;"></canvas>
+    <canvas id="pre_def_balls" width="500" height="50" style="background-color: white;display:block"></canvas>
+    <div id="score">score:0</div>
 </body>
 <script>
-  var canvas = document.getElementById('canvas');
-  var context = canvas.getContext('2d');
-  var cballs = document.getElementById('pre_def_balls');
-  var ctxballs = cballs.getContext('2d');
-  var tiles_array = [], preBalls = [];
-  var score = 0
-  var genBalls = 3
-  const tileWidth = canvas.width / 10;
-  const tileHeight = canvas.height / 10;
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext('2d');
+    var cballs = document.getElementById('pre_def_balls');
+    var ctxballs = cballs.getContext('2d');
+    var tiles_array = [], preBalls = [];
+    var score = 0
+    var genBalls = 3
+    const tileWidth = canvas.width / 10;
+    const tileHeight = canvas.height / 10;
 
-  function Circle(x, y, fillColor, strokeStyle) {
-    this.gridX = x;
-    this.gridY = y
-    this.fillColor = fillColor;
-    this.color = fillColor
-    this.click = false
-    this.strokeStyle = 'white';
-  }
-
-  canvas.onclick = function (e) {
-    console.log(e)
-    const elementClickedId = checkClick(e);
-    console.log(elementClickedId)
-    let clicked = false
-    if (typeof elementClickedId == 'undefined') {
-      let tile
-      for (let i = 0; i < tiles_array.length; i++)
-        if (tiles_array[i].fillColor == 'black')
-          tile = tiles_array[i]
-      if (!tile) return
-      wave(tile, { gridX: Math.ceil(e.clientX / tileWidth), gridY: Math.ceil(e.clientY / tileWidth) })
-      return
+    function Circle(x, y, fillColor, strokeStyle) {
+        this.gridX = x;
+        this.gridY = y
+        this.fillColor = fillColor;
+        this.color = fillColor
+        this.click = false
+        this.strokeStyle = 'white';
     }
-    tiles_array.forEach(function (tile, i) {
-      if (tile.click && elementClickedId.fillColor != 'black') { clicked = true; return }
-    })
-    if (clicked && !elementClickedId) return
-    if (clicked) return
-    if (elementClickedId.click && elementClickedId.fillColor == 'black') {
-      elementClickedId.fillColor = elementClickedId.color;
-      elementClickedId.click = false
+
+    canvas.onclick = function (e) {
+        console.log(e)
+        const elementClickedId = checkClick(e);
+        console.log(elementClickedId)
+        let clicked = false
+        if (typeof elementClickedId == 'undefined') {
+            let tile
+            for (let i = 0; i < tiles_array.length; i++)
+                if (tiles_array[i].fillColor == 'black')
+                    tile = tiles_array[i]
+            if (!tile) return
+            wave(tile, { gridX: Math.ceil(e.clientX / tileWidth), gridY: Math.ceil(e.clientY / tileWidth) })
+            return
+        }
+        tiles_array.forEach(function (tile, i) {
+            if (tile.click && elementClickedId.fillColor != 'black') { clicked = true; return }
+        })
+        if (clicked && !elementClickedId) return
+        if (clicked) return
+        if (elementClickedId.click && elementClickedId.fillColor == 'black') {
+            elementClickedId.fillColor = elementClickedId.color;
+            elementClickedId.click = false
+        }
+        else {
+            elementClickedId.click = true
+            elementClickedId.fillColor = 'black'
+        }
+        drawTiles();
+    };
+    function preGenBalls() {
+        preBalls = []
+        for (let i = 0; i < genBalls; i++) {
+            const color = ballColor()
+            preBalls.push(color)
+            ctxballs.beginPath();
+
+            ctxballs.fillStyle = color;
+            ctxballs.ellipse(cballs.width / 2 + 25 * i - 25, cballs.height / 2, 10, 10, 0, 0, 2 * Math.PI);
+
+            ctxballs.lineWidth = "2";
+            ctxballs.strokeStyle = color;
+            ctxballs.fill();
+            ctxballs.closePath();
+        }
     }
-    else {
-      elementClickedId.click = true
-      elementClickedId.fillColor = 'black'
+
+    function checkClick(event) {
+        const clickX = event.layerX;
+        const clickY = event.layerY;
+        const X = Math.ceil(clickX / tileWidth)
+        const Y = Math.ceil(clickY / tileWidth)
+        let element
+        tiles_array.forEach((tile, i) => {
+            if (X == tile.gridX && Y == tile.gridY) element = tile;
+        });
+        return element;
     }
-    drawTiles();
-  };
-  function preGenBalls() {
-    preBalls = []
-    for (let i = 0; i < genBalls; i++) {
-      const color = ballColor()
-      preBalls.push(color)
-      ctxballs.beginPath();
 
-      ctxballs.fillStyle = color;
-      ctxballs.ellipse(cballs.width / 2 + 25 * i - 25, cballs.height / 2, 10, 10, 0, 0, 2 * Math.PI);
-
-      ctxballs.lineWidth = "2";
-      ctxballs.strokeStyle = color;
-      ctxballs.fill();
-      ctxballs.closePath();
-    }
-  }
-
-  function checkClick(event) {
-    const clickX = event.layerX;
-    const clickY = event.layerY;
-    const X = Math.ceil(clickX / tileWidth)
-    const Y = Math.ceil(clickY / tileWidth)
-    let element
-    tiles_array.forEach((tile, i) => {
-      if (X == tile.gridX && Y == tile.gridY) element = tile;
-    });
-    return element;
-  }
-
-  // Create Tiles
-  function createTiles(balls = 5, init = false) {
-    let maxTiles = false
-    while (tiles_array.length < balls) {
-      const fillColor = init ? ballColor() : preBalls[0];
-      let collision = false
-      const drawPosition = randPosGen(0, 11)
-      const tile = new Circle(drawPosition.x, drawPosition.y, fillColor);
-      for (let i = 0; i < tiles_array.length; i++) {
-        collision = checkCollision(tiles_array[i], drawPosition)
-        if (collision) break
+    // Create Tiles
+    function createTiles(balls = 5, init = false) {
+        let maxTiles = false
+        while (tiles_array.length < balls) {
+            const fillColor = init ? ballColor() : preBalls[0];
+            let collision = false
+            const drawPosition = randPosGen(0, 11)
+            const tile = new Circle(drawPosition.x, drawPosition.y, fillColor);
+            for (let i = 0; i < tiles_array.length; i++) {
+                collision = checkCollision(tiles_array[i], drawPosition)
+                if (collision) break
+                if (tiles_array.length > 99) {
+                    maxTiles = true
+                    break;
+                }
+            }
+            if (!collision) {
+                if (!init) preBalls.shift()
+                tiles_array.push(tile);
+            }
+            if (maxTiles) break
+        }
         if (tiles_array.length > 99) {
-          maxTiles = true
-          break;
+            console.log("game over")
         }
-      }
-      if (!collision) {
-        if (!init) preBalls.shift()
-        tiles_array.push(tile);
-      }
-      if (maxTiles) break
     }
-    if (tiles_array.length > 99) {
-      console.log("game over")
+    const randPosGen = (min, max) => {
+        return { x: Math.round(min + 0.5 + Math.random() * (max - min - 1)), y: Math.round(min + 0.5 + Math.random() * (max - min - 1)) }
     }
-  }
-  const randPosGen = (min, max) => {
-    return { x: Math.round(min + 0.5 + Math.random() * (max - min - 1)), y: Math.round(min + 0.5 + Math.random() * (max - min - 1)) }
-  }
-  function checkCollision(tile, drawPosition) {
-    return (tile.gridX == drawPosition.x && tile.gridY == drawPosition.y) ? true : false
-  }
-
-  function drawTiles() {
-
-    console.log(tiles_array)
-    tiles_array.forEach(function (tile, i, arr) {
-      context.beginPath();
-
-      context.fillStyle = tile.fillColor;
-      context.ellipse(tile.gridX * tileWidth - tileWidth / 2, tile.gridY * tileWidth - tileWidth / 2, 20, 20, 0, 0, 2 * Math.PI);
-
-      context.lineWidth = "2";
-      context.strokeStyle = tile.strokeStyle;
-      context.fill();
-      context.closePath();
-    });
-  }
-
-  function ballColor() {
-    const colors = ['blue', 'cyan', 'red', 'brown', 'green', 'yellow', 'magenta'];
-    return colors[Math.floor(Math.random() * colors.length)];
-  }
-
-  function axisY() {
-    context.beginPath()
-    for (let i = 0; i <= 10; i++) {
-      context.moveTo(canvas.height / 10 * i, 0);
-      context.lineTo(canvas.height / 10 * i, canvas.height);
-      context.strokeColor = 'black';
-      context.strokeStyle = 'black';
+    function checkCollision(tile, drawPosition) {
+        return (tile.gridX == drawPosition.x && tile.gridY == drawPosition.y) ? true : false
     }
 
-    context.stroke()
-    //context.fill();
-    context.closePath();
-  }
-  function axisX() {
-    context.beginPath()
-    for (let i = 0; i <= 10; i++) {
-      context.moveTo(0, canvas.width / 10 * i);
-      context.lineTo(canvas.width, canvas.width / 10 * i);
-      context.strokeColor = 'black';
-      context.strokeStyle = 'black';
+    function drawTiles() {
+
+        console.log(tiles_array)
+        tiles_array.forEach(function (tile, i, arr) {
+            context.beginPath();
+
+            context.fillStyle = tile.fillColor;
+            context.ellipse(tile.gridX * tileWidth - tileWidth / 2, tile.gridY * tileWidth - tileWidth / 2, 20, 20, 0, 0, 2 * Math.PI);
+
+            context.lineWidth = "2";
+            context.strokeStyle = tile.strokeStyle;
+            context.fill();
+            context.closePath();
+        });
     }
 
-    context.stroke()
-    //context.fill();
-    context.closePath();
-  }
-
-  function RemoveBalls(cell) {
-    var line = [];
-    Line(cell, { x: -1, y: 0 }, line);//горизонт
-    Line(cell, { x: 1, y: 0 }, line);
-    line.push(cell)
-    addScore(line);
-    line = []
-    Line(cell, { x: 0, y: -1 }, line);//вертикаль
-    Line(cell, { x: 0, y: 1 }, line);
-    line.push(cell)
-    addScore(line);
-    line = []
-    Line(cell, { x: -1, y: -1 }, line);//диагональ
-    Line(cell, { x: 1, y: 1 }, line);
-    line.push(cell)
-    addScore(line);
-    line = []
-    Line(cell, { x: -1, y: 1 }, line);//2 диагональ
-    Line(cell, { x: 1, y: -1 }, line);
-    line.push(cell)
-    addScore(line);
-  }
-  function addScore(line) {
-    if (line.length >= 5) {
-      for (let i = 0; i < line.length; i++)
-        for (let j = 0; j < tiles_array.length; j++)
-          if (tiles_array[j].gridX == line[i].gridX && tiles_array[j].gridY == line[i].gridY)
-            tiles_array.splice(j, 1)
-      score += line.length * 2
-      document.getElementById('score').innerText = 'score:' + score
+    function ballColor() {
+        const colors = ['blue', 'cyan', 'red', 'brown', 'green', 'yellow', 'magenta'];
+        return colors[Math.floor(Math.random() * colors.length)];
     }
-  }
 
-  function Line(cell, d, line) {
-    let x = cell.gridX, y = cell.gridY;
-    do {
-      x += d.x;
-      y += d.y;
-      let hitResult = null
-      for (let i = 0; i < tiles_array.length; i++)
-        if (tiles_array[i].gridX == x && tiles_array[i].gridY == y)
-          hitResult = tiles_array[i]
-      if (hitResult == null || hitResult.color != cell.color) break
-      if (hitResult.color === cell.color) line.push(hitResult);
-    } while (x > 0 && y > 0 && x < canvas.width && y < canvas.height)
-  }
-  function wave(start, end) {
-    let ir = 0, A = Array(10)
-    for (let i = 0; i < 10; i++) {
-      A[i] = Array(10)
-      for (let j = 0; j < 10; j++)A[i][j] = 300
-    }
-    tiles_array.forEach(function (tile, i) {
-      A[tile.gridX - 1][tile.gridY - 1] = -1
-    })
-    A[start.gridX - 1][start.gridY - 1] = 300
-    A[end.gridX - 1][end.gridY - 1] = 0
-    while (true) {
-      for (let i = 0; i < A.length; i++)
-        for (let j = 0; j < A[i].length; j++) {
-          if (A[i][j] === ir) {
-            if (i - 1 >= 0 && A[i - 1][j] >= 300) A[i - 1][j] = ir + 1;
-            if (j - 1 >= 0 && A[i][j - 1] >= 300) A[i][j - 1] = ir + 1;
-            if (i + 1 < 10 && A[i + 1][j] >= 300) A[i + 1][j] = ir + 1;
-            if (j + 1 < 10 && A[i][j + 1] >= 300) A[i][j + 1] = ir + 1;
-          }
+    function axisY() {
+        context.beginPath()
+        for (let i = 0; i <= 10; i++) {
+            context.moveTo(canvas.height / 10 * i, 0);
+            context.lineTo(canvas.height / 10 * i, canvas.height);
+            context.strokeColor = 'black';
+            context.strokeStyle = 'black';
         }
-      ir++;
-      if (A[start.gridX - 1][start.gridY - 1] < 300) break;
-      if (ir > 100) return;
-    }
-    start.fillColor = start.color
-    start.click = false
-    let i = start.gridX - 1, j = start.gridY - 1, min = ir, k = 0, l = 0;
-    for (var t = 0; t < ir; t++) {
-      (function (t) {
-        setTimeout(function () {
-          if (i - 1 >= 0 && min > A[i - 1][j] && A[i - 1][j] !== -1) { start.gridX -= 1; min = A[i - 1][j]; k = i - 1; l = j; reDraw(); }
-          if (i + 1 < 10 && min > A[i + 1][j] && A[i + 1][j] !== -1) { start.gridX += 1; min = A[i + 1][j]; k = i + 1; l = j; reDraw(); }
-          if (j - 1 >= 0 && min > A[i][j - 1] && A[i][j - 1] !== -1) { start.gridY -= 1; min = A[i][j - 1]; k = i; l = j - 1; reDraw(); }
-          if (j + 1 < 10 && min > A[i][j + 1] && A[i][j + 1] !== -1) { start.gridY += 1; min = A[i][j + 1]; k = i; l = j + 1; reDraw(); }
-          if (t == ir - 1) { createTiles(tiles_array.length + genBalls); RemoveBalls(start); reDraw(); preGenBalls(); }
-          i = k; j = l;
-        }, 50 * t);
-      })(t);
-    }
-  }
 
-  function reDraw() {
-    context.clearRect(0, 0, canvas.width, canvas.height);
+        context.stroke()
+        //context.fill();
+        context.closePath();
+    }
+    function axisX() {
+        context.beginPath()
+        for (let i = 0; i <= 10; i++) {
+            context.moveTo(0, canvas.width / 10 * i);
+            context.lineTo(canvas.width, canvas.width / 10 * i);
+            context.strokeColor = 'black';
+            context.strokeStyle = 'black';
+        }
+
+        context.stroke()
+        //context.fill();
+        context.closePath();
+    }
+
+    function RemoveBalls(cell) {
+        var line = [];
+        Line(cell, { x: -1, y: 0 }, line);//горизонт
+        Line(cell, { x: 1, y: 0 }, line);
+        line.push(cell)
+        addScore(line);
+        line = []
+        Line(cell, { x: 0, y: -1 }, line);//вертикаль
+        Line(cell, { x: 0, y: 1 }, line);
+        line.push(cell)
+        addScore(line);
+        line = []
+        Line(cell, { x: -1, y: -1 }, line);//диагональ
+        Line(cell, { x: 1, y: 1 }, line);
+        line.push(cell)
+        addScore(line);
+        line = []
+        Line(cell, { x: -1, y: 1 }, line);//2 диагональ
+        Line(cell, { x: 1, y: -1 }, line);
+        line.push(cell)
+        addScore(line);
+    }
+    function addScore(line) {
+        if (line.length >= 5) {
+            for (let i = 0; i < line.length; i++)
+                for (let j = 0; j < tiles_array.length; j++)
+                    if (tiles_array[j].gridX == line[i].gridX && tiles_array[j].gridY == line[i].gridY)
+                        tiles_array.splice(j, 1)
+            score += line.length * 2
+            document.getElementById('score').innerText = 'score:' + score
+        }
+    }
+
+    function Line(cell, d, line) {
+        let x = cell.gridX, y = cell.gridY;
+        do {
+            x += d.x;
+            y += d.y;
+            let hitResult = null
+            for (let i = 0; i < tiles_array.length; i++)
+                if (tiles_array[i].gridX == x && tiles_array[i].gridY == y)
+                    hitResult = tiles_array[i]
+            if (hitResult == null || hitResult.color != cell.color) break
+            if (hitResult.color === cell.color) line.push(hitResult);
+        } while (x > 0 && y > 0 && x < canvas.width && y < canvas.height)
+    }
+    function wave(start, end) {
+        let A = Array(10), q = []
+        for (let i = 0; i < 10; i++) {
+            A[i] = Array(10)
+            for (let j = 0; j < 10; j++)A[i][j] = 300
+        }
+        tiles_array.forEach(function (tile, i) {
+            A[tile.gridX - 1][tile.gridY - 1] = -1
+        })
+        q.push({ x: end.gridX - 1, y: end.gridY - 1 })
+        A[start.gridX - 1][start.gridY - 1] = 300
+        A[end.gridX - 1][end.gridY - 1] = 0
+        let q_iter = 0, find = false
+        while (q.length > 0) {
+            if (q[q_iter].x == start.gridX - 1 && q[q_iter].y == start.gridY - 1) { find = true; break }
+            if (q[q_iter].x - 1 >= 0 && A[q[q_iter].x - 1][q[q_iter].y] == 300) {
+                A[q[q_iter].x - 1][q[q_iter].y] = A[q[q_iter].x][q[q_iter].y] + 1
+                q.push({ x: q[q_iter].x - 1, y: q[q_iter].y })
+            }
+            if (q[q_iter].x + 1 < A.length && A[q[q_iter].x + 1][q[q_iter].y] == 300) {
+                A[q[q_iter].x + 1][q[q_iter].y] = A[q[q_iter].x][q[q_iter].y] + 1
+                q.push({ x: q[q_iter].x + 1, y: q[q_iter].y })
+            }
+            if (q[q_iter].y - 1 >= 0 && A[q[q_iter].x][q[q_iter].y - 1] == 300) {
+                A[q[q_iter].x][q[q_iter].y - 1] = A[q[q_iter].x][q[q_iter].y] + 1
+                q.push({ x: q[q_iter].x, y: q[q_iter].y - 1 })
+            }
+            if (q[q_iter].y + 1 < A[0].length && A[q[q_iter].x][q[q_iter].y + 1] == 300) {
+                A[q[q_iter].x][q[q_iter].y + 1] = A[q[q_iter].x][q[q_iter].y] + 1
+                q.push({ x: q[q_iter].x, y: q[q_iter].y + 1 })
+            }
+            q.shift()
+            q_iter = 0;
+        }
+        start.fillColor = start.color
+        start.click = false
+        if (!find) {
+            reDraw()
+            return
+        }
+        let i = start.gridX - 1, j = start.gridY - 1, min = A[start.gridX - 1][start.gridY - 1], k = 0, l = 0;
+        for (let t = 0; t < A[start.gridX - 1][start.gridY - 1]; t++) {
+            //(function (t) {
+            setTimeout(function () {
+                if (i - 1 >= 0 && min > A[i - 1][j] && A[i - 1][j] !== -1) { start.gridX -= 1; min = A[i - 1][j]; k = i - 1; l = j; reDraw(); }
+                if (i + 1 < 10 && min > A[i + 1][j] && A[i + 1][j] !== -1) { start.gridX += 1; min = A[i + 1][j]; k = i + 1; l = j; reDraw(); }
+                if (j - 1 >= 0 && min > A[i][j - 1] && A[i][j - 1] !== -1) { start.gridY -= 1; min = A[i][j - 1]; k = i; l = j - 1; reDraw(); }
+                if (j + 1 < 10 && min > A[i][j + 1] && A[i][j + 1] !== -1) { start.gridY += 1; min = A[i][j + 1]; k = i; l = j + 1; reDraw(); }
+                if (min == 0) { createTiles(tiles_array.length + genBalls); RemoveBalls(start); reDraw(); preGenBalls(); }
+                i = k; j = l;
+            }, 50 * t);
+            //})(t);
+        }
+    }
+
+    function reDraw() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        axisX()
+        axisY()
+        drawTiles();
+    }
+    createTiles(5, true);
+    drawTiles();
     axisX()
     axisY()
-    drawTiles();
-  }
-  createTiles(5, true);
-  drawTiles();
-  axisX()
-  axisY()
-  preGenBalls()
+    preGenBalls()
 </script>
 
 </html>
